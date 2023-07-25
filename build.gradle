@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+}
+
+group 'com.relex'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testImplementation 'io.rest-assured:rest-assured:5.3.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.1'
+}
+
+test {
+    useJUnitPlatform()
+}
