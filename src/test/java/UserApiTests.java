@@ -82,7 +82,7 @@ public class UserApiTests {
                 login, "user@example.com", "SoME_PAssword1!!");
         User userEntity2 = new User("Ivan", "Ivanovich", "Ivanov",
                 login, "user2@example.com", "SoME_PAssword1323!!");
-        LoginCredentials loginCredentials = new LoginCredentials(login,"SoME_PAssword1!!","","");
+        LoginCredentials loginCredentials = new LoginCredentials(login, "SoME_PAssword1!!", "", "");
         String userId = given()
                 .contentType("application/json")
                 .body(om.writeValueAsString(userEntity1))
@@ -94,7 +94,7 @@ public class UserApiTests {
                 .when().post(BASE_URL + "/users")
                 .then().statusCode(409);
 
-        String user1Token=given()
+        String user1Token = given()
                 .contentType("application/json")
                 .body(om.writeValueAsString(loginCredentials))
                 .when().post(BASE_URL + "/login")
@@ -128,8 +128,7 @@ public class UserApiTests {
                 .body(userLoginCredentials)
                 .when().post(BASE_URL + "/login")
                 .then().statusCode(200).extract().body().jsonPath().getString("access_token");
-
-//         Сверяем тело
+//         Сверяем тело (получаем доступ к своему же аккаунту)
         given()
                 .header("Authorization", "Bearer " + userToken)
                 .when().get(BASE_URL + "/users/" + userId)
@@ -138,17 +137,30 @@ public class UserApiTests {
                         "firstName", equalTo("Ivan"),
                         "lastName", equalTo("Dvurechenskiy"),
                         "email", equalTo("user@example.com"));
+//        Логинимся под админом
+        String adminToken = given()
+                .contentType("application/json")
+                .body(om.writeValueAsString(adminCredentialsEntity))
+                .when().post(BASE_URL + "/login")
+                .then().statusCode(200).extract().body().jsonPath().getString("access_token");
+
+//        Проверяем, что админ может получить доступ к пользователю
+        given()
+                .header("Authorization", "Bearer " + adminToken)
+                .when().get(BASE_URL + "/users/" + userId)
+                .then()
+                .statusCode(200).body(
+                        "firstName", equalTo("Ivan"),
+                        "lastName", equalTo("Dvurechenskiy"),
+                        "email", equalTo("user@example.com"));
+
 //        Удаляем пользователя
         given()
                 .header("Authorization", "Bearer " + userToken)
                 .when().delete(BASE_URL + "/users/" + userId)
                 .then()
                 .statusCode(200);
-        String adminToken = given()
-                .contentType("application/json")
-                .body(om.writeValueAsString(adminCredentialsEntity))
-                .when().post(BASE_URL + "/login")
-                .then().statusCode(200).extract().body().jsonPath().getString("access_token");
+
 //        Проверяем, что пользователь удалён
         given()
                 .header("Authorization", "Bearer " + adminToken)
@@ -242,5 +254,6 @@ public class UserApiTests {
                 .then()
                 .statusCode(200);
     }
+
 
 }
