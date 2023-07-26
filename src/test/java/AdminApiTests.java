@@ -21,15 +21,14 @@ public class AdminApiTests {
     @Test
     public void whenLoginWithAdminCredentialsExpectToAccessAllUsers() throws JsonProcessingException {
         String admin = om.writeValueAsString(loginCredentialsEntity);
-        String adminResponse = given()
+        String token = given()
                 .contentType("application/json")
                 .body(admin)
                 .when()
                 .post(BASE_URL + "/login")
                 .then().statusCode(200)
-                .extract().response().asString();
-        JsonPath adminJsonPath = new JsonPath(adminResponse);
-        token = adminJsonPath.getString("access_token");
+                .extract().body().jsonPath().getString("access_token");
+
         List allUsers = given()
                 .header("Authorization", "Bearer " + token)
                 .when()
@@ -58,32 +57,26 @@ public class AdminApiTests {
         LoginCredentials userLoginCredentials = new LoginCredentials(login,"SoME_PAssword1!!","","");
         String userData = om.writeValueAsString(userEntity);
 
-        String response = given()
+        String userId = given()
                 .contentType("application/json")
-                .body(userData)
-                .when()
-                .post(BASE_URL + "/users")
-                .then().statusCode(201).extract().response().asString();
+                .body(userData).when().post(BASE_URL + "/users")
+                .then().statusCode(201).extract().body().jsonPath().getString("uuid");
 
-        String userTokenResponse = given()
+        String userToken = given()
                 .contentType("application/json")
                 .body(userLoginCredentials)
                 .when()
                 .post(BASE_URL + "/login")
                 .then().statusCode(200)
-                .extract().response().asString();
-        JsonPath userIdResponse = new JsonPath(response);
-        JsonPath userResponse = new JsonPath(userTokenResponse);
-        String token = userResponse.get("access_token");
-        String userId = userIdResponse.getString("uuid");
+                .extract().body().jsonPath().getString("access_token");
 
-        given().header("Authorization", "Bearer " + token)
+        given().header("Authorization", "Bearer " + userToken)
                 .when()
                 .get(BASE_URL + "/users/all")
                 .then()
                 .statusCode(403);
 
-        given().header("Authorization", "Bearer " + token)
+        given().header("Authorization", "Bearer " + userToken)
                 .when()
                 .delete(BASE_URL + "/users/"+userId)
                 .then()
